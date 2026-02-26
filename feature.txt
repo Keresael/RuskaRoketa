@@ -1,0 +1,18 @@
+help - list all commands
+
+traklist -> Ultime 5 song riprodotte
+Recupero Credenziali -> Connessione al network (lastfm)  -> Richiesta -> Print
+
+clip <nomeclip> -> clippa automaticamente l'ultimo minuto di live
+helix api(?)
+
+rank -> lp totali wr session lp e wr session quanti lp al cutoff del rank
+Ciclico ogni 5 minuti ( Recupero Credenziali -> Connessione al Network (Riot) -> Richiesta -> Normmalizzazione dei dati -> Operazioni sui dati -> Store in File json )
+Recupero informazioni File json -> Print
+
+cutoff <gm/grandmaster/gmaster-chall/challenger/ch> -> a quanti lp sta un cutoff di un top rank
+Ciclico ogni 6 ore ( Connessione alla Pagina -> Scrape -> Cleaning -> Store in File Json )
+Recupero informazioni Json -> Print
+
+lobby -> Informazioni su gli altri player in lobby ( nome tag lp pro(lolpros?)
+https://api.lolpros.gg/lol/game/47c4a0dc-1d06-4360-bb3a-437630e34152
