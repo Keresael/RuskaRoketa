@@ -15,4 +15,3 @@ Ciclico ogni 6 ore ( Connessione alla Pagina -> Scrape -> Cleaning -> Store in F
 Recupero informazioni Json -> Print
 
 lobby -> Informazioni su gli altri player in lobby ( nome tag lp pro(lolpros?)
-https://api.lolpros.gg/lol/game/47c4a0dc-1d06-4360-bb3a-437630e34152
