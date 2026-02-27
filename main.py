@@ -56,8 +56,8 @@ class Commands(commands.Component):
         await ctx.reply(f"{message}")
 
     @commands.command()
-    async def clip(self, ctx: commands.Context) -> None:
-        await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
+    async def clip(self, ctx: commands.Context, *, message: str) -> None:
+        await ctx.reply(f"{message}")
 
     @commands.command()
     async def rank(self, ctx: commands.Context) -> None:
