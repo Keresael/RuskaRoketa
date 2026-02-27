@@ -59,9 +59,9 @@ class Commands(commands.Component):
     async def clip(self, ctx: commands.Context) -> None:
         await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
 
-    #@commands.command()
-    #async def rank(self, ctx: commands.Context) -> None:
-    #    await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
+    @commands.command()
+    async def rank(self, ctx: commands.Context) -> None:
+        await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
 
     @commands.command()
     async def lobby(self, ctx: commands.Context) -> None:
@@ -71,17 +71,11 @@ def main() -> None:
     twitchio.utils.setup_logging(level=logging.INFO)
 
     async def runner() -> None:
-        # 1. Avviamo i loop del "data_cacher" come task in background prima di bloccare il flusso.
-        asyncio.create_task(start_cutoff_tasks())
+        #Scraper startup
+        #asyncio.create_task(start_cutoff_tasks())
 
         async with Bot() as bot:
-            # 2. bot.start() è un'operazione che blocca l'esecuzione (gira all'infinito finché il bot è vivo)
-            # Qualsiasi codice DOPO bot.start() non verrà MAI eseguito normalmente fino allo spegnimento del bot.
             await bot.start(os.getenv("TWITCH_TOKEN"))
-
-
-
-
     asyncio.run(runner())
 
 

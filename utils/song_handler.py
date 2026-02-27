@@ -6,7 +6,7 @@ import pylast
 
 from dotenv import load_dotenv
 
-env_path = Path(file).resolve().parent.parent / "Credential.env"
+env_path = Path(__file__).resolve().parent.parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
 
 
@@ -25,6 +25,15 @@ def get_song() -> Song | None:
         return None
     return Song(track.title, track.artist.get_name())
 
-if name == "main":
+"""
+def get_track() -> pylast.Track:
+    user = get_user()
+    track = user.get_recent_tracks(limit=5)
+    mh dove le salvo le track?
+
+"""
+
+
+if __name__ == "main":
     song = get_song()
     print(song.title if song else "Nessuna canzone in riproduzione")
