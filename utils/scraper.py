@@ -13,7 +13,7 @@ class Link(Enum):
     CUTOFF_CH = "https://www.replays.lol/cutoff/EUW/challenger"
 
     #Scraper ogni 5 minuti
-    LOLPROS_DEIDARA = "https://api.lolpros.gg/lol/game/47c4a0dc-1d06-4360-bb3a-437630e34152"
+    LOLPROS_DEIDARA = "https://api.lolpros.gg/lol/game/{lolpros_uuid}"
     RIOT_PLAYERSTATS = "https://{region}.api.riotgames.com/lol/league/v4/entries/by-puuid/{uuid}?api_key={apikey}"
     OPGG_CURRENT_RANK = "https://op.gg/it/lol/summoners/{region}/{username}-{tag}"
 
