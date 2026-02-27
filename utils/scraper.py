@@ -3,6 +3,9 @@ import aiohttp
 import asyncio
 import dotenv
 
+from config_handler import get_config
+#from json_file_formatter import tu_mamma_morta
+
 
 class Link(Enum):
     #Scrape/fetch on startup

@@ -76,6 +76,7 @@ def main() -> None:
 
         async with Bot() as bot:
             await bot.start(os.getenv("TWITCH_TOKEN"))
+
     asyncio.run(runner())
 
 
