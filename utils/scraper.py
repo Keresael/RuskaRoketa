@@ -12,7 +12,7 @@ class Link(Enum):
     LOLPROS_UUID = "https://api.lolpros.gg/es/profiles/{lolpros_ign}"
     RIOT_PUUID = "https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{Ign}/{Tag}?api_key={apikey}"
     TWITCH_BRODCASTER = "https://decapi.me/twitch/id/{Twitch_Ign}"
-
+    #async_scraper.py sync_scraper.py????
     #Scraper ogni 6 ore
     CUTOFF_GM = "https://www.replays.lol/cutoff/EUW/grandmaster"
     CUTOFF_CH = "https://www.replays.lol/cutoff/EUW/challenger"
