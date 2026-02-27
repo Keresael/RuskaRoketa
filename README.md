@@ -1,0 +1,1 @@
+A Python-based Twitch bot designed to track and display real-time League of Legends player statistics, including rank, ELO, and current music. Developed for www.twitch.tv/deidxraa, the bot aggregates data by scraping www.replays.lol, www.op.gg and www.lolpros.gg, alongside integrating directly with the Riot Games and Last.fm APIs.
