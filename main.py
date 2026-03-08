@@ -10,6 +10,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from utils.song_handler import get_song
+from utils.config_handler import get_config
+from utils.scraper import start_tasks, get_cutoff
 
 LOGGER: logging.Logger = logging.getLogger("Bot")
 env_path = Path(__file__).resolve().parent / "Credential.env"
@@ -23,7 +25,7 @@ class Bot(commands.Bot):
 
 
     async def setup_hook(self) -> None:
-
+        #payload = eventsub.ChatMessageSubscription(broadcaster_user_id=get_config(section="Details", value="Twitch Brodcaster"), user_id=self.bot_id)
         payload = eventsub.ChatMessageSubscription(broadcaster_user_id="131070633", user_id=self.bot_id)
         await self.subscribe_websocket(payload=payload)
 
@@ -53,7 +55,14 @@ class Commands(commands.Component):
 
     @commands.command()
     async def cutoff(self, ctx: commands.Context, *, message: str) -> None:
-        await ctx.reply(f"{message}")
+        if message is "gm" or message is "grandmaster" or message is "gmaster":
+            #get_from_json(cutoff_grandmaster)
+            await ctx.reply("")
+        if message is "ch" or message is "chall" or message is "challenger":
+            #get_from_json(cutoff_challenger)
+            await ctx.reply("")
+        else:
+            await ctx.reply("Argomento non riconosciuto. Prova con Challenger o GrandMaster")
 
     @commands.command()
     async def clip(self, ctx: commands.Context, *, message: str) -> None:
@@ -71,8 +80,7 @@ def main() -> None:
     twitchio.utils.setup_logging(level=logging.INFO)
 
     async def runner() -> None:
-        #Scraper startup
-        #asyncio.create_task(start_cutoff_tasks())
+        asyncio.create_task(start_tasks())
 
         async with Bot() as bot:
             await bot.start(os.getenv("TWITCH_TOKEN"))

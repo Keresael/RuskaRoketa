@@ -15,3 +15,5 @@ Ciclico ogni 6 ore ( Connessione alla Pagina -> Scrape -> Cleaning -> Store in F
 Recupero informazioni Json -> Print
 
 lobby -> Informazioni su gli altri player in lobby ( nome tag lp pro(lolpros?)
+
+autobet ->

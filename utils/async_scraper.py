@@ -8,14 +8,9 @@ from config_handler import get_config
 
 
 class Link(Enum):
-    #Scrape/fetch on startup
-    LOLPROS_UUID = "https://api.lolpros.gg/es/profiles/{lolpros_ign}"
-    RIOT_PUUID = "https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{Ign}/{Tag}?api_key={apikey}"
-    TWITCH_BRODCASTER = "https://decapi.me/twitch/id/{Twitch_Ign}"
     #async_scraper.py sync_scraper.py????
     #Scraper ogni 6 ore
-    CUTOFF_GM = "https://www.replays.lol/cutoff/EUW/grandmaster"
-    CUTOFF_CH = "https://www.replays.lol/cutoff/EUW/challenger"
+    CUTOFF= "https://www.replays.lol/cutoff/{Region}/{cutoff_type}"
 
     #Scrape/fetch ogni 5 minuti
     LOLPROS_INGPRO = "https://api.lolpros.gg/lol/game/{lolpros_uuid}"
@@ -27,9 +22,6 @@ class Link(Enum):
 
     def format(self, *args, **kwargs):
         return self.value.format(*args, **kwargs)
-
-async def fetch_twitch():
-    pass
 
 async def scrape_cutoff():
     pass
@@ -48,6 +40,4 @@ async def scraper_worker():
     pass
 
 async def start_tasks():
-    pass
-    #metodino per fare il join di tutti gli async
-    #await asyncio.gather()
+    await asyncio.gather(scrape_cutoff())
