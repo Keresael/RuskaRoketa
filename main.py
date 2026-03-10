@@ -10,8 +10,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from utils.song_handler import get_song
-from utils.config_handler import get_config
-from utils.scraper import start_tasks, get_cutoff
+from utils.config_handler import create_config, get_config
+from utils.scraper import start_tasks
 
 LOGGER: logging.Logger = logging.getLogger("Bot")
 env_path = Path(__file__).resolve().parent / "Credential.env"
@@ -25,6 +25,7 @@ class Bot(commands.Bot):
 
 
     async def setup_hook(self) -> None:
+        #il value Twitch Brodcaster deve essere recuperato facendo una query in #Sync_Scraper
         #payload = eventsub.ChatMessageSubscription(broadcaster_user_id=get_config(section="Details", value="Twitch Brodcaster"), user_id=self.bot_id)
         payload = eventsub.ChatMessageSubscription(broadcaster_user_id="131070633", user_id=self.bot_id)
         await self.subscribe_websocket(payload=payload)
@@ -39,13 +40,13 @@ class Commands(commands.Component):
 
     @commands.command()
     async def help(self, ctx: commands.Context) -> None:
-        await ctx.reply(f"Comandi disponibili: !song, !tracklist, !cutoff, !lobby, !clip, !rank")
+        await ctx.reply(f"!song, !cutoff <gm/chall>, !clip <clip title> ")
 
     @commands.command(aliases=["musica"])
     async def song(self, ctx: commands.Context) -> None:
         song = get_song()
         if song is None:
-            await ctx.reply("Nessuna canzone in riproduzione")
+            await ctx.reply("No song currently playing")
         else:
             await ctx.reply(f"{song.title} - {song.artist}")
 
@@ -55,22 +56,45 @@ class Commands(commands.Component):
 
     @commands.command()
     async def cutoff(self, ctx: commands.Context, *, message: str) -> None:
-        if message is "gm" or message is "grandmaster" or message is "gmaster":
+        if message == "gm" or message == "grandmaster" or message =="gmaster":
             #get_from_json(cutoff_grandmaster)
             await ctx.reply("")
-        if message is "ch" or message is "chall" or message is "challenger":
+        if message == "ch" or message == "chall" or message == "challenger":
             #get_from_json(cutoff_challenger)
             await ctx.reply("")
         else:
-            await ctx.reply("Argomento non riconosciuto. Prova con Challenger o GrandMaster")
+            await ctx.reply("Argument not found. Try with Challenger or GrandMaster")
 
     @commands.command()
-    async def clip(self, ctx: commands.Context, *, message: str) -> None:
-        await ctx.reply(f"{message}")
+    async def clip(self, ctx: commands.Context, *, title: str = None) -> None:
+        if not title or title.isspace():
+            await ctx.reply("Hey! You need to add a title to the clip.")
+            return
+        else:
+            try:
+                utenti = await ctx.bot.fetch_users(logins=[ctx.channel.name])
 
-    @commands.command()
-    async def rank(self, ctx: commands.Context) -> None:
-        await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
+                if not utenti:
+                    await ctx.send("Errore: impossibile trovare il canale.")
+                    return
+
+                streamer = utenti[0]
+
+                clip = await streamer.create_clip(title=title, duration=60, token_for=os.getenv("TWITCH_TOKEN"))
+
+                await ctx.reply(f"Clip created! Check it out here: {clip.edit_url}")
+
+            except twitchio.HTTPException as e:
+                await ctx.send("Ops, I'm not able to create a clip right now.")
+                LOGGER.error(e)
+            except Exception as e:
+                await ctx.send("Ops, I'm not able to create a clip right now.")
+                LOGGER.error(e)
+
+
+    #@commands.command()
+    #async def rank(self, ctx: commands.Context) -> None:
+    #    await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
 
     @commands.command()
     async def lobby(self, ctx: commands.Context) -> None:
@@ -78,15 +102,14 @@ class Commands(commands.Component):
 
 def main() -> None:
     twitchio.utils.setup_logging(level=logging.INFO)
-
+    create_config()
     async def runner() -> None:
-        asyncio.create_task(start_tasks())
+        #asyncio.create_task(start_tasks())
+
 
         async with Bot() as bot:
             await bot.start(os.getenv("TWITCH_TOKEN"))
 
     asyncio.run(runner())
-
-
 
 main()
