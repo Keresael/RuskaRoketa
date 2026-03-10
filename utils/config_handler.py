@@ -1,10 +1,9 @@
 import configparser
-from os import write
 
+file_path = '../config.ini'
 
 def create_config():
     config = configparser.ConfigParser()
-    file_path = '../config.ini'
     files_read = config.read(file_path)
 
     if not files_read:
@@ -15,6 +14,7 @@ def create_config():
         "Riot_Ign": "Deidxra",
         "Riot_Tag": "666",
         "Riot_Region": "EUW",
+        "LolPros_Name": "Deidara",
         "Twitch_Brodcaster": "Deidxraa"
     }
 
@@ -23,7 +23,7 @@ def create_config():
 
 def get_config(section, value) -> str:
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(file_path)
     if not config.has_section(section):
         create_config()
     return config.get(section, value)

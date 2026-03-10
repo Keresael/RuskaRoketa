@@ -1,26 +1,39 @@
-from enum import Enum
+import os
 import requests
+
+from enum import Enum
+from dotenv import load_dotenv
+
 from config_handler import get_config
+from pathlib import Path
+
+env_path = Path(__file__).resolve().parent.parent / "Credential.env"
+load_dotenv(dotenv_path=env_path)
 
 class Link(Enum):
     LOLPROS_UUID = "https://api.lolpros.gg/es/profiles/{lolpros_ign}"
     RIOT_PUUID = "https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{Ign}/{Tag}?api_key={apikey}"
     TWITCH_BRODCASTER = "https://decapi.me/twitch/id/{Twitch_Ign}"
-    TWITCH_TOKEN_REFERSH = " https://twitchtokengenerator.com/api/refresh/{TOKEN_REFERSH}"
+    TWITCH_TOKEN_REFERSH = "https://twitchtokengenerator.com/api/refresh/{TOKEN_REFERSH}"
 
+    def format(self, *args, **kwargs):
+        return self.value.format(*args, **kwargs)
 
 def fetch_twitch():
-    r = requests.get(Link.TWITCH_BRODCASTER.value)
+    r = requests.get(Link.TWITCH_BRODCASTER.format(Twitch_Ign=get_config(section="Details", value="Twitch_Brodcaster")))
     print(r.content)
 
 def fetch_token():
-    pass
+    r = requests.get(Link.TWITCH_TOKEN_REFERSH.format(TOKEN_REFERSH=os.getenv("TWITCH_REFERSH_TOKEN")))
+    print(r.content)
 
 def fetch_lolpros():
-    pass
+    r = requests.get(Link.LOLPROS_UUID.format(lolpros_ign=get_config(section="Details", value="lolpros_name")))
+    print(r.content)
 
 def fetch_riot():
-    pass
+    r = requests.get(Link.RIOT_PUUID.format(region=get_config(section="Details", value="Riot_region"),Ign=get_config(section="Details", value="riot_ign"),Tag=get_config(section="Details", value="riot_tag"),apikey=os.getenv("RIOT_API_KEY")))
+    print(r.content)
 
 if __name__ == "__main__":
     fetch_twitch()
