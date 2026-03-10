@@ -14,6 +14,7 @@ def create_config():
         "Riot_Ign": "Deidxra",
         "Riot_Tag": "666",
         "Riot_Region": "EUW",
+        "Riot_Server": "Europe",
         "LolPros_Name": "Deidara",
         "Twitch_Brodcaster": "Deidxraa"
     }
