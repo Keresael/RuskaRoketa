@@ -9,11 +9,10 @@ from twitchio.ext import commands
 from pathlib import Path
 from dotenv import load_dotenv
 
+from utils.logger_handler import LOGGER
 from utils.song_handler import get_song
-from utils.config_handler import create_config, get_config
-from utils.scraper import start_tasks
 
-LOGGER: logging.Logger = logging.getLogger("Bot")
+
 env_path = Path(__file__).resolve().parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
 
@@ -85,10 +84,10 @@ class Commands(commands.Component):
                 await ctx.reply(f"Clip created! Check it out here: {clip.edit_url}")
 
             except twitchio.HTTPException as e:
-                await ctx.send("Ops, I'm not able to create a clip right now.")
+                await ctx.reply("Ops, I'm not able to create a clip right now.")
                 LOGGER.error(e)
             except Exception as e:
-                await ctx.send("Ops, I'm not able to create a clip right now.")
+                await ctx.reply("Ops, I'm not able to create a clip right now.")
                 LOGGER.error(e)
 
 
@@ -101,8 +100,8 @@ class Commands(commands.Component):
         await ctx.reply(f"Non ho voglia di finirlo adesso domani faccio")
 
 def main() -> None:
-    twitchio.utils.setup_logging(level=logging.INFO)
-    create_config()
+    LOGGER.setLevel(logging.INFO)
+    #fetch_token()
     async def runner() -> None:
         #asyncio.create_task(start_tasks())
 

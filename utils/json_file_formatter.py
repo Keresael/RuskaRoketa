@@ -23,6 +23,9 @@ class Stats:
     Global_rank: int
     Lp: int
     Session_Lp: int
+    Riot_uuid: str
+    Lolpros_uuid: str
+    in_game: bool
 
 
 def create_json():
