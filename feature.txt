@@ -3,9 +3,6 @@ help - list all commands
 traklist -> Ultime 5 song riprodotte
 Recupero Credenziali -> Connessione al network (lastfm)  -> Richiesta -> Print
 
-clip <nomeclip> -> clippa automaticamente l'ultimo minuto di live
-helix api(?)
-
 rank -> lp totali wr session lp e wr session quanti lp al cutoff del rank
 Ciclico ogni 5 minuti ( Recupero Credenziali -> Connessione al Network (Riot) -> Richiesta -> Normmalizzazione dei dati -> Operazioni sui dati -> Store in File json )
 Recupero informazioni File json -> Print

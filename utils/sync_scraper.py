@@ -1,25 +1,32 @@
-import os
-import requests
+import asyncio
 import functools
-
+import os
 from enum import Enum
-from dotenv import load_dotenv
-from dotenv import set_key
-
-from config_handler import get_config
 from pathlib import Path
-from logger_handler import LOGGER
+
+import requests
+from dotenv import load_dotenv, set_key
+
+from .config_handler import get_config
+from .database import close_db, init_db, upsert_user
+from .logger_handler import LOGGER
 
 env_path = Path(__file__).resolve().parent.parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
 
+
 class Link(Enum):
     LOLPROS_UUID = "https://api.lolpros.gg/es/profiles/{lolpros_ign}"
-    RIOT_PUUID = "https://{server}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{ign}/{tag}?api_key={apikey}"
+    RIOT_PUUID = (
+        "https://{server}.api.riotgames.com/riot/account/v1/accounts/"
+        "by-riot-id/{ign}/{tag}?api_key={apikey}"
+    )
     TWITCH_BRODCASTER = "https://decapi.me/twitch/id/{Twitch_Ign}"
-    TWITCH_TOKEN_REFERSH = "https://twitchtokengenerator.com/api/refresh/{TOKEN_REFERSH}"
+    TWITCH_TOKEN_REFERSH = (
+        "https://twitchtokengenerator.com/api/refresh/{TOKEN_REFERSH}"
+    )
 
-    def format(self, *args, **kwargs):
+    def format(self, *args, **kwargs) -> str:
         return self.value.format(*args, **kwargs)
 
 
@@ -35,7 +42,9 @@ def api_error_handler(func):
             LOGGER.error(f"Network Error in {func.__name__}: {e}")
             return None
         except KeyError as e:
-            LOGGER.error(f"Unexpected JSON structure in {func.__name__}. Missing key: {e}")
+            LOGGER.error(
+                f"Unexpected JSON structure in {func.__name__}. Missing key: {e}"
+            )
             return None
         except Exception as e:
             LOGGER.error(f"Unexpected system error in {func.__name__}: {e}")
@@ -43,54 +52,83 @@ def api_error_handler(func):
 
     return wrapper
 
+
 @api_error_handler
-def fetch_twitch():
-    url = Link.TWITCH_BRODCASTER.format(Twitch_Ign=get_config(section="Details", value="Twitch_Brodcaster"))
+def fetch_twitch() -> str | None:
+    url = Link.TWITCH_BRODCASTER.format(
+        Twitch_Ign=get_config(section="Details", value="Twitch_Brodcaster")
+    )
     with requests.get(url) as response:
         response.raise_for_status()
-        brodcaster_id = response.json()
+        broadcaster_id = response.json()
 
-    print(brodcaster_id)
+    LOGGER.info(f"Twitch broadcaster ID: {broadcaster_id}")
+    return broadcaster_id
 
-    return brodcaster_id
 
 @api_error_handler
-def fetch_token():
-    url = Link.TWITCH_TOKEN_REFERSH.format(TOKEN_REFERSH=os.getenv("TWITCH_REFERSH_TOKEN"))
+def fetch_token() -> None:
+    url = Link.TWITCH_TOKEN_REFERSH.format(
+        TOKEN_REFERSH=os.getenv("TWITCH_REFERSH_TOKEN")
+    )
     with requests.get(url) as response:
         response.raise_for_status()
         token_rough = response.json()
 
     token = token_rough["access_token"]
-    set_key(env_path,"TWITCH_TOKEN", token)
+    set_key(env_path, "TWITCH_TOKEN", token)
+    LOGGER.info("Twitch access token refreshed and saved.")
 
 
 @api_error_handler
-def fetch_lolpros():
-    url = Link.LOLPROS_UUID.format(lolpros_ign=get_config(section="Details", value="lolpros_name")    )
+def fetch_lolpros() -> str | None:
+    url = Link.LOLPROS_UUID.format(
+        lolpros_ign=get_config(section="Details", value="lolpros_name")
+    )
     with requests.get(url) as response:
         response.raise_for_status()
         lolpros_uuid_rough = response.json()
 
-    lolpros_uuid = lolpros_uuid_rough["uuid"]
-    print(lolpros_uuid)
-
+    lolpros_uuid: str = lolpros_uuid_rough["uuid"]
+    LOGGER.info(f"LolPros UUID: {lolpros_uuid}")
     return lolpros_uuid
 
+
 @api_error_handler
-def fetch_riot():
-    url = Link.RIOT_PUUID.format(server=get_config(section="Details", value="Riot_server"),ign=get_config(section="Details", value="riot_ign"),tag=get_config(section="Details", value="riot_tag"),apikey=os.getenv("RIOT_API_KEY"))
+def fetch_riot() -> str | None:
+    url = Link.RIOT_PUUID.format(
+        server=get_config(section="Details", value="Riot_server"),
+        ign=get_config(section="Details", value="riot_ign"),
+        tag=get_config(section="Details", value="riot_tag"),
+        apikey=os.getenv("RIOT_API_KEY"),
+    )
     with requests.get(url) as response:
         response.raise_for_status()
         riot_uuid_rough = response.json()
 
-    riot_uuid = riot_uuid_rough["puuid"]
-    print(riot_uuid)
-
+    riot_uuid: str = riot_uuid_rough["puuid"]
+    LOGGER.info(f"Riot PUUID: {riot_uuid}")
     return riot_uuid
 
+
+async def startup() -> None:
+    try:
+        fetch_twitch()
+        fetch_token()
+
+        lolpros_uuid = fetch_lolpros()
+        riot_uuid = fetch_riot()
+
+        if riot_uuid is None:
+            LOGGER.error("startup: could not retrieve Riot PUUID — aborting DB seed.")
+            return
+
+        await init_db()
+        await upsert_user(riot_uuid=riot_uuid, lolpros_uuid=lolpros_uuid)
+        LOGGER.info("Startup complete — user seeded in DB.")
+    finally:
+        await close_db()
+
+
 if __name__ == "__main__":
-    fetch_twitch()
-    fetch_token()
-    fetch_lolpros()
-    fetch_riot()
+    asyncio.run(startup())
