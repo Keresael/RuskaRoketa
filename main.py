@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from pathlib import Path
+from webbrowser import get
 
 import twitchio
 from dotenv import load_dotenv
@@ -11,8 +12,8 @@ from twitchio.ext import commands
 from utils.async_scraper import start_tasks
 from utils.database import close_db, get_cutoffs, get_player_stats
 from utils.logger_handler import LOGGER
-from utils.song_handler import get_song
-from utils.sync_scraper import startup
+from utils.song_handler import get_song, get_tracklist
+from utils.sync_scraper import fetch_twitch, startup
 
 env_path = Path(__file__).resolve().parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
@@ -29,9 +30,8 @@ class Bot(commands.Bot):
         )
 
     async def setup_hook(self) -> None:
-        # il value Twitch Brodcaster deve essere recuperato facendo una query in #Sync_Scraper
         payload = eventsub.ChatMessageSubscription(
-            broadcaster_user_id="131070633", user_id=self.bot_id
+            broadcaster_user_id=fetch_twitch(), user_id=self.bot_id
         )
         await self.subscribe_websocket(payload=payload)
 
@@ -51,13 +51,20 @@ class Commands(commands.Component):
     async def song(self, ctx: commands.Context) -> None:
         song = get_song()
         if song is None:
-            await ctx.reply("No song currently playing")
+            await ctx.reply("Nessuna traccia trovata.")
         else:
             await ctx.reply(f"{song.title} - {song.artist}")
 
     @commands.command()
     async def tracklist(self, ctx: commands.Context) -> None:
-        await ctx.reply("Non ho voglia di finirlo adesso domani faccio")
+        tracks = await asyncio.to_thread(get_tracklist)
+        if not tracks:
+            await ctx.reply("Nessuna traccia recente trovata.")
+            return
+        reply = " | ".join(
+            f"{i}. {s.title} - {s.artist}" for i, s in enumerate(tracks, start=1)
+        )
+        await ctx.reply(reply)
 
     @commands.command()
     async def cutoff(self, ctx: commands.Context, *, message: str = "") -> None:

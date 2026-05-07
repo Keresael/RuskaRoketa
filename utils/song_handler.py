@@ -3,19 +3,23 @@ import os
 from pathlib import Path
 
 import pylast
-
 from dotenv import load_dotenv
 
 env_path = Path(__file__).resolve().parent.parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
+
 
 @dataclasses.dataclass
 class Song:
     title: str
     artist: str
 
+
 def get_user() -> pylast.User:
-    return pylast.LastFMNetwork(api_key=os.getenv("LASTFM_KEY"), api_secret=os.getenv("LASTFM_SECRET")).get_user("deidaralol")
+    return pylast.LastFMNetwork(
+        api_key=os.getenv("LASTFM_KEY"), api_secret=os.getenv("LASTFM_SECRET")
+    ).get_user("deidaralol")
+
 
 def get_song() -> Song | None:
     user = get_user()
@@ -24,13 +28,11 @@ def get_song() -> Song | None:
         return None
     return Song(track.title, track.artist.get_name())
 
-"""
-def get_track() -> pylast.Track:
-    user = get_user()
-    track = user.get_recent_tracks(limit=5)
-    mh dove le salvo le track?
 
-"""
+def get_tracklist() -> list[Song]:
+    user = get_user()
+    recent = user.get_recent_tracks(limit=5)
+    return [Song(entry.track.title, entry.track.artist.get_name()) for entry in recent]
 
 
 if __name__ == "main":

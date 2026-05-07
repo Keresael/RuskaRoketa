@@ -60,9 +60,9 @@ def fetch_twitch() -> str | None:
     )
     with requests.get(url) as response:
         response.raise_for_status()
-        broadcaster_id = response.json()
+        broadcaster_id = response.text.strip()
 
-    LOGGER.info(f"Twitch broadcaster ID: {broadcaster_id}")
+    LOGGER.info("Twitch broadcaster ID: %s", broadcaster_id)
     return broadcaster_id
 
 
