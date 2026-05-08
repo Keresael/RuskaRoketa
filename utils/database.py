@@ -36,6 +36,7 @@ class User(Base):
     lolpros_uuid: Mapped[str | None] = mapped_column(
         String(255), unique=True, nullable=True
     )
+    twitch_broadcaster_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     win: Mapped[int] = mapped_column(Integer, default=0)
     losses: Mapped[int] = mapped_column(Integer, default=0)
@@ -45,6 +46,7 @@ class User(Base):
     session_wins: Mapped[int] = mapped_column(Integer, default=0)
     session_losses: Mapped[int] = mapped_column(Integer, default=0)
     session_winrate: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    session_lp: Mapped[int] = mapped_column(Integer, default=0)
 
     lp_gain: Mapped[int | None] = mapped_column(Integer, nullable=True)
     player_rank: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -81,16 +83,27 @@ async def init_db() -> None:
     LOGGER.info("All tables created (or already exist).")
 
 
-async def upsert_user(riot_uuid: str, lolpros_uuid: str | None = None) -> None:
+async def upsert_user(
+    riot_uuid: str,
+    lolpros_uuid: str | None = None,
+    twitch_broadcaster_id: str | None = None,
+) -> None:
     stmt = (
         insert(User)
-        .values(riot_uuid=riot_uuid, lolpros_uuid=lolpros_uuid)
-        .on_duplicate_key_update(lolpros_uuid=lolpros_uuid)
+        .values(
+            riot_uuid=riot_uuid,
+            lolpros_uuid=lolpros_uuid,
+            twitch_broadcaster_id=twitch_broadcaster_id,
+        )
+        .on_duplicate_key_update(
+            lolpros_uuid=lolpros_uuid,
+            twitch_broadcaster_id=twitch_broadcaster_id,
+        )
     )
     async with AsyncSessionLocal() as session:
         await session.execute(stmt)
         await session.commit()
-    LOGGER.info(f"Upserted user riot_uuid={riot_uuid}.")
+    LOGGER.info("Upserted user riot_uuid=%s", riot_uuid)
 
 
 async def get_all_users() -> list[User]:
@@ -174,3 +187,20 @@ async def get_player_stats() -> User | None:
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(User))
         return result.scalars().first()
+
+
+async def reset_session_stats(riot_uuid: str) -> None:
+    async with AsyncSessionLocal() as session:
+        await session.execute(
+            update(User)
+            .where(User.riot_uuid == riot_uuid)
+            .values(session_wins=0, session_losses=0, session_winrate=0, session_lp=0)
+        )
+        await session.commit()
+    LOGGER.info("Session stats resettate per %s", riot_uuid)
+
+
+async def get_broadcaster_id() -> str | None:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User.twitch_broadcaster_id))
+        return result.scalar_one_or_none()

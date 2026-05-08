@@ -2,18 +2,18 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-from webbrowser import get
 
 import twitchio
 from dotenv import load_dotenv
 from twitchio import eventsub
 from twitchio.ext import commands
 
-from utils.async_scraper import start_tasks
+from utils.async_worker import get_lobby, start_tasks
+from utils.autobet_helper import start_autobet, stop_autobet
 from utils.database import close_db, get_cutoffs, get_player_stats
 from utils.logger_handler import LOGGER
 from utils.song_handler import get_song, get_tracklist
-from utils.sync_scraper import fetch_twitch, startup
+from utils.sync_worker import fetch_twitch, startup
 
 env_path = Path(__file__).resolve().parent / "Credential.env"
 load_dotenv(dotenv_path=env_path)
@@ -21,9 +21,14 @@ load_dotenv(dotenv_path=env_path)
 
 class Bot(commands.Bot):
     def __init__(self) -> None:
+        client_id = os.getenv("TWITCH_ID")
+        client_secret = os.getenv("TWITCH_SECRET")
+        if not client_id or not client_secret:
+            LOGGER.error("TWITCH_ID e/o TWITCH_SECRET mancanti nel .env")
+            raise RuntimeError("TWITCH_ID e/o TWITCH_SECRET mancanti nel .env")
         super().__init__(
-            client_id=os.getenv("TWITCH_ID"),
-            client_secret=os.getenv("TWITCH_SECRET"),
+            client_id=client_id,
+            client_secret=client_secret,
             bot_id="1157269116",
             owner_id="605131495",
             prefix="!",
@@ -36,7 +41,7 @@ class Bot(commands.Bot):
         await self.subscribe_websocket(payload=payload)
 
         await self.add_component(Commands(self))
-        LOGGER.info("Finished setup hook!")
+        LOGGER.info("Finito hook setup")
 
 
 class Commands(commands.Component):
@@ -45,7 +50,9 @@ class Commands(commands.Component):
 
     @commands.command()
     async def help(self, ctx: commands.Context) -> None:
-        await ctx.reply("!song, !cutoff <gm/chall>, !clip <clip title>, !rank")
+        await ctx.reply(
+            "!song, !cutoff <gm/chall>, !clip <clip title>, !rank, !session"
+        )
 
     @commands.command(aliases=["musica", "spotify"])
     async def song(self, ctx: commands.Context) -> None:
@@ -70,7 +77,7 @@ class Commands(commands.Component):
     async def cutoff(self, ctx: commands.Context, *, message: str = "") -> None:
         msg = message.lower().strip()
 
-        if msg in ("gm", "grandmaster", "gmaster"):
+        if msg in ("gm", "grandmaster", "gmaster", "grandmasta"):
             _, gm = await get_cutoffs()
             value = f"{gm} LP" if gm is not None else "dato non disponibile"
             await ctx.reply(f"Cutoff Grandmaster (EUW): {value}")
@@ -82,7 +89,7 @@ class Commands(commands.Component):
 
         else:
             await ctx.reply(
-                "Rank non trovato — usa: !cutoff grandmaster  oppure  !cutoff challenger"
+                "Rank non trovato — usa: !cutoff  grandmasta   oppure  !cutoff challenger"
             )
 
     @commands.command()
@@ -147,17 +154,57 @@ class Commands(commands.Component):
             f"{label} {lp} LP | {wins}W {losses}L | {player.winrate or 0}% WR"
         )
 
-    # @commands.command()
-    # async def lobby(self, ctx: commands.Context) -> None:
-    #    await ctx.reply("Non ho voglia di finirlo adesso domani faccio")
+    @commands.command()
+    async def lobby(self, ctx: commands.Context) -> None:
+        player = await get_player_stats()
 
-    # @commands.command()
-    # async def session(self, ctx: commands.Context) -> None:
-    #    await ctx.reply("")
+        if player is None or not player.in_game:
+            await ctx.reply("Non in game attualmente.")
+            return
 
-    # @commands.command()
-    # async def autobet(self, ctx: commands.Context) -> None:
-    #    await ctx.reply("")
+        pros = get_lobby()
+        if not pros:
+            await ctx.reply("Nessun pro rilevato in lobby.")
+            return
+
+        blue = [p for p in pros if p.team == "blue"]
+        red = [p for p in pros if p.team == "red"]
+
+        parts: list[str] = []
+        if blue:
+            parts.append("Blue: " + " | ".join(f"{p.name} ({p.role})" for p in blue))
+        if red:
+            parts.append("Red: " + " | ".join(f"{p.name} ({p.role})" for p in red))
+
+        await ctx.reply("  ".join(parts))
+
+    @commands.command()
+    async def session(self, ctx: commands.Context) -> None:
+        player = await get_player_stats()
+        if player is None:
+            await ctx.reply("Nessun dato disponibile.")
+            return
+        await ctx.reply(
+            f"{player.session_wins}W {player.session_losses}L "
+            f"| {player.session_winrate or 0}% WR "
+            f"| {player.session_lp:+d} LP"
+        )
+
+    @commands.command()
+    async def autobet(self, ctx: commands.Context, action: str = "") -> None:
+        is_owner = str(ctx.author.id) == self.bot.owner_id
+        is_mod = getattr(ctx.author, "is_mod", False)
+        if not (is_owner or is_mod):
+            await ctx.reply("Non hai i permessi per usare questo comando.")
+            return
+
+        match action.lower().strip():
+            case "start":
+                await start_autobet(ctx)
+            case "stop":
+                await stop_autobet(ctx)
+            case _:
+                await ctx.reply("Uso: !autobet start | !autobet stop")
 
 
 def main() -> None:

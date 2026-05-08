@@ -36,18 +36,18 @@ def api_error_handler(func):
         try:
             return func(*args, **kwargs)
         except requests.exceptions.HTTPError as e:
-            LOGGER.error(f"HTTP Error in {func.__name__}: {e}")
+            LOGGER.error(f"Errore HTTP in {func.__name__}: {e}")
             return None
         except requests.exceptions.RequestException as e:
-            LOGGER.error(f"Network Error in {func.__name__}: {e}")
+            LOGGER.error(f"Errore di rete in {func.__name__}: {e}")
             return None
         except KeyError as e:
             LOGGER.error(
-                f"Unexpected JSON structure in {func.__name__}. Missing key: {e}"
+                f"Errore di struttura JSON in {func.__name__}. Chiave mancante: {e}"
             )
             return None
         except Exception as e:
-            LOGGER.error(f"Unexpected system error in {func.__name__}: {e}")
+            LOGGER.error(f"Errore di sistema in {func.__name__}: {e}")
             return None
 
     return wrapper
@@ -77,7 +77,7 @@ def fetch_token() -> None:
 
     token = token_rough["access_token"]
     set_key(env_path, "TWITCH_TOKEN", token)
-    LOGGER.info("Twitch access token refreshed and saved.")
+    LOGGER.info("Token Twitch aggiornato e salvato.")
 
 
 @api_error_handler
@@ -120,12 +120,14 @@ async def startup() -> None:
         riot_uuid = fetch_riot()
 
         if riot_uuid is None:
-            LOGGER.error("startup: could not retrieve Riot PUUID — aborting DB seed.")
+            LOGGER.error(
+                "Impossibile recuperare il PUUID Riot — interruzione del seed del DB."
+            )
             return
 
         await init_db()
         await upsert_user(riot_uuid=riot_uuid, lolpros_uuid=lolpros_uuid)
-        LOGGER.info("Startup complete — user seeded in DB.")
+        LOGGER.info("Startup completato — utente inserito nel DB.")
     finally:
         await close_db()
 
