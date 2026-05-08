@@ -1,6 +1,0 @@
-traklist -> Ultime 5 song riprodotte
-Recupero Credenziali -> Connessione al network (lastfm)  -> Richiesta -> Print
-
-lobby -> Informazioni su gli altri player in lobby ( nome tag lp pro(lolpros?)
-
-autobet ->
