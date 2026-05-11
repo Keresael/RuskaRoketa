@@ -113,7 +113,6 @@ def fetch_riot() -> str | None:
 
 async def startup() -> None:
     try:
-        fetch_twitch()
         fetch_token()
 
         lolpros_uuid = fetch_lolpros()
@@ -126,7 +125,10 @@ async def startup() -> None:
             return
 
         await init_db()
-        await upsert_user(riot_uuid=riot_uuid, lolpros_uuid=lolpros_uuid)
+        await upsert_user(
+            riot_uuid=riot_uuid,
+            lolpros_uuid=lolpros_uuid,
+        )
         LOGGER.info("Startup completato — utente inserito nel DB.")
     finally:
         await close_db()

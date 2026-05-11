@@ -202,5 +202,10 @@ async def reset_session_stats(riot_uuid: str) -> None:
 
 async def get_broadcaster_id() -> str | None:
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User.twitch_broadcaster_id))
+        result = await session.execute(
+            select(User.twitch_broadcaster_id)
+            .where(User.twitch_broadcaster_id.is_not(None))
+            .where(User.twitch_broadcaster_id != "")
+            .limit(1)
+        )
         return result.scalar_one_or_none()

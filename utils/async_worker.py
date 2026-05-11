@@ -413,7 +413,7 @@ async def start_tasks() -> None:
                 fetch_lolpros_ingame(),
                 # scrape_opgg(),
             ),
-            120,
+            20,
         ),
         _loop(fetch_is_in_game, 5),
         _loop_at_midnight(_reset_session),

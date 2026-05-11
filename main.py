@@ -9,7 +9,6 @@ from twitchio import eventsub
 from twitchio.ext import commands
 
 from utils.async_worker import get_lobby, start_tasks
-from utils.autobet_helper import start_autobet, stop_autobet
 from utils.database import close_db, get_cutoffs, get_player_stats
 from utils.logger_handler import LOGGER
 from utils.song_handler import get_song, get_tracklist
@@ -51,22 +50,22 @@ class Commands(commands.Component):
     @commands.command()
     async def help(self, ctx: commands.Context) -> None:
         await ctx.reply(
-            "!song, !cutoff <gm/chall>, !clip <clip title>, !rank, !session"
+            "!song, !cutoff <gm/chall>, !clip <clip title>, !rank, !session, !lobby"
         )
 
     @commands.command(aliases=["musica", "spotify"])
     async def song(self, ctx: commands.Context) -> None:
         song = get_song()
         if song is None:
-            await ctx.reply("Nessuna traccia trovata.")
+            await ctx.reply("Nessuna traccia trovata. 😢")
         else:
-            await ctx.reply(f"{song.title} - {song.artist}")
+            await ctx.reply(f"🎵 {song.title} - {song.artist}")
 
     @commands.command()
     async def tracklist(self, ctx: commands.Context) -> None:
         tracks = await asyncio.to_thread(get_tracklist)
         if not tracks:
-            await ctx.reply("Nessuna traccia recente trovata.")
+            await ctx.reply("Nessuna traccia recente trovata. 😢")
             return
         reply = " | ".join(
             f"{i}. {s.title} - {s.artist}" for i, s in enumerate(tracks, start=1)
@@ -95,14 +94,14 @@ class Commands(commands.Component):
     @commands.command()
     async def clip(self, ctx: commands.Context, *, title: str = " ") -> None:
         if not title or title.isspace():
-            await ctx.reply("Hey! Devi aggiungere un titolo alla clip.")
+            await ctx.reply("Hey! 😡 Devi aggiungere un titolo alla clip.")
             return
         else:
             try:
                 utenti = await ctx.bot.fetch_users(logins=[ctx.channel.name])
 
                 if not utenti:
-                    await ctx.send("Errore: impossibile trovare il canale.")
+                    await ctx.send("Errore: impossibile trovare il canale. 🫣")
                     return
 
                 streamer = utenti[0]
@@ -112,14 +111,14 @@ class Commands(commands.Component):
                 )
 
                 await ctx.reply(
-                    f"Clip creata! Puoi vedere la clip qui: {clip.edit_url}"
+                    f"🥳 Clip creata! Puoi vedere la clip qui: {clip.edit_url}"
                 )
 
             except twitchio.HTTPException as e:
-                await ctx.reply("Ops, impossibile creare la clip.")
+                await ctx.reply("😢 Ops, impossibile creare la clip.")
                 LOGGER.error(e)
             except Exception as e:
-                await ctx.reply("Ops, impossibile creare la clip.")
+                await ctx.reply("😢 Ops, impossibile creare la clip.")
                 LOGGER.error(e)
 
     @commands.command()
@@ -127,7 +126,7 @@ class Commands(commands.Component):
         player = await get_player_stats()
 
         if player is None or player.player_rank is None:
-            await ctx.reply("Nessun dato disponibile.")
+            await ctx.reply("😢 Nessun dato disponibile.")
             return
 
         _RANK_EMOJI: dict[str, str] = {
@@ -154,17 +153,17 @@ class Commands(commands.Component):
             f"{label} {lp} LP | {wins}W {losses}L | {player.winrate or 0}% WR"
         )
 
-    @commands.command()
+    @commands.command(aliases=["pro"])
     async def lobby(self, ctx: commands.Context) -> None:
         player = await get_player_stats()
 
         if player is None or not player.in_game:
-            await ctx.reply("Non in game attualmente.")
+            await ctx.reply("😢 Non in game attualmente.")
             return
 
         pros = get_lobby()
         if not pros:
-            await ctx.reply("Nessun pro rilevato in lobby.")
+            await ctx.reply("😢 Nessun pro rilevato in lobby.")
             return
 
         blue = [p for p in pros if p.team == "blue"]
@@ -182,29 +181,13 @@ class Commands(commands.Component):
     async def session(self, ctx: commands.Context) -> None:
         player = await get_player_stats()
         if player is None:
-            await ctx.reply("Nessun dato disponibile.")
+            await ctx.reply("😢 Nessun dato disponibile.")
             return
         await ctx.reply(
             f"{player.session_wins}W {player.session_losses}L "
             f"| {player.session_winrate or 0}% WR "
             f"| {player.session_lp:+d} LP"
         )
-
-    @commands.command()
-    async def autobet(self, ctx: commands.Context, action: str = "") -> None:
-        is_owner = str(ctx.author.id) == self.bot.owner_id
-        is_mod = getattr(ctx.author, "is_mod", False)
-        if not (is_owner or is_mod):
-            await ctx.reply("Non hai i permessi per usare questo comando.")
-            return
-
-        match action.lower().strip():
-            case "start":
-                await start_autobet(ctx)
-            case "stop":
-                await stop_autobet(ctx)
-            case _:
-                await ctx.reply("Uso: !autobet start | !autobet stop")
 
 
 def main() -> None:
