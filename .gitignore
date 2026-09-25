@@ -1,0 +1,7 @@
+Credential.env
+config.ini
+.tio.tokens.json
+.venv/
+.idea/
+__pycache__/
+*.pyc
