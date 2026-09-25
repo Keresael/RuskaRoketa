@@ -25,7 +25,7 @@ WebSocket), the bot listens on the channel and answers commands prefixed with
 
 ## How it works
 
-The bot never holds a single source of truth: it pulls live data from several
+The bot pulls live data from several
 places and pieces it together on request.
 
 - **Riot Games API** — the streamer's summoner data: rank, LP, win rate and
@@ -37,7 +37,7 @@ places and pieces it together on request.
 Requests are routed through an async worker that fetches and caches the data in
 a local database, so repeated commands are fast and don't hammer the upstream
 APIs. Twitch credentials and the Last.fm key live in `Credential.env` and
-`config.ini` (gitignored, never committed).
+`config.ini` .
 
 ## Project layout
 
